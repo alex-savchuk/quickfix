@@ -540,7 +540,8 @@ FIX::FieldBase Message::extractField( const std::string& string, std::string::si
     throw InvalidMessage("Equal sign not found in field");
 
   int field = 0;
-  IntConvertor::convert( tagStart, equalSign, field );
+  if( !IntConvertor::convert( tagStart, equalSign, field ) )
+    throw InvalidMessage( std::string("Field tag is invalid: ") + std::string( tagStart, equalSign ));
 
   std::string::const_iterator const valueStart = equalSign + 1;
 
@@ -558,7 +559,7 @@ FIX::FieldBase Message::extractField( const std::string& string, std::string::si
     if ( pGroup && pGroup->isSetField( lenField ) )
     {
       const std::string& fieldLength = pGroup->getField( lenField );
-      soh = valueStart + atol( fieldLength.c_str() );
+      soh = valueStart + IntConvertor::convert( fieldLength );
     }
     else
     {
@@ -576,6 +577,10 @@ FIX::FieldBase Message::extractField( const std::string& string, std::string::si
         const std::string& fieldLength = lenMap->getField( lenField );
         soh = valueStart + atol( fieldLength.c_str() );
       }
+    }
+    catch( FieldConvertError& e )
+    {
+      throw InvalidMessage( std::string( "Unable to determine SOH for data field " ) + IntConvertor::convert( field ) + std::string( ": " ) + e.what() );
     }
   }
 
